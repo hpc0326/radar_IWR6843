@@ -276,6 +276,7 @@ def parser_one_mmw_demo_output_packet(data, readNumBytes,debug=False):
                 print("    type %d" % (tlvType))
                 print("    len %d bytes" % (tlvLen))
                                                             
+                                                            
             if tlvType == 7: 
                 
                 # TLV type 7 contains snr and noise of all detect objects.

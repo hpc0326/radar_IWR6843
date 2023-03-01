@@ -1,0 +1,6 @@
+{
+    "configFileName" : "xwr68xx_AOP_profile_2023_03_01T07_56_04_503.cfg",
+    "cliPort" : "COM6",
+    "dataPort" : "COM7",
+    "debugMode" : "True"
+}

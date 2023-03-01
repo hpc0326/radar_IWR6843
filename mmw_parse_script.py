@@ -47,14 +47,21 @@ import time
 import numpy as np
 import os
 import sys
+import json
 # import the parser function 
 from parser_mmw_demo import parser_one_mmw_demo_output_packet
 
+
+f = open('configuration.json')
+data = json.load(f)
+    
 # Change the configuration file name
-configFileName = 'xwr68xx_profile_2023_02_19T17_52_20_641.cfg'
+configFileName = data['configFileName']
+cliPort = data['cliPort']
+dataPort = data['dataPort']
 
 # Change the debug variable to use print()
-DEBUG = False
+DEBUG = True
 
 # Constants
 maxBufferSize = 2**15
@@ -83,8 +90,8 @@ def serialConfig(configFileName):
     #Dataport = serial.Serial('/dev/ttyACM1', 921600)
 
     # Windows
-    CLIport = serial.Serial('COM6', 115200)
-    Dataport = serial.Serial('COM7', 921600)
+    CLIport = serial.Serial(cliPort, 115200)
+    Dataport = serial.Serial(dataPort, 921600)
     
     # Mac
     #CLIport = serial.Serial('/dev/tty.SLAB_USBtoUART', 115200)
@@ -133,7 +140,7 @@ def parseConfigFile(configFileName):
             
             chirpStartIdx = int(splitWords[1]);
             chirpEndIdx = int(splitWords[2]);
-            numLoops = int(splitWords[3]);
+            numLoops = float(splitWords[3]);
             numFrames = int(splitWords[4]);
             framePeriodicity = int(splitWords[5]);
 
@@ -276,6 +283,7 @@ def readAndParseData14xx(Dataport, configParameters):
                         "x": detectedX_array, "y": detectedY_array, "z": detectedZ_array}
             dataOK = 1 
             #print(detObj)
+            
         else: 
             # error in parsing; exit the loop
             print("error in parsing this frame; continue")
@@ -309,13 +317,13 @@ def update():
     if dataOk and len(detObj["x"]) > 0:
         x = detObj["x"]
         y = detObj["y"]
-        print(x)
-        print(y)
+        
     return dataOk, x, y
 
 
 def main():        
-    # Configurate the serial port
+
+    # Configurate the serial port and write the config doc.
     CLIport, Dataport = serialConfig(configFileName)
 
     # Get the configuration parameters from the configuration file
