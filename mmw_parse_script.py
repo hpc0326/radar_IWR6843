@@ -52,7 +52,7 @@ import json
 from parser_mmw_demo import parser_one_mmw_demo_output_packet
 
 
-f = open('configuration.json')
+f = open('configuration_mac.json')
 data = json.load(f)
     
 # Change the configuration file name
