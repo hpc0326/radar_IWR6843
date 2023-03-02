@@ -36,43 +36,12 @@ import math
 import binascii
 import codecs
 import numpy as np
+from parser_module.data_parser import getHex, getUint16, getUint32
 
 # definations for parser pass/fail
 TC_PASS   =  0
 TC_FAIL   =  1
 
-def getUint32(data):
-    """!
-       This function coverts 4 bytes to a 32-bit unsigned integer.
-
-        @param data : 1-demension byte array  
-        @return     : 32-bit unsigned integer
-    """ 
-    return (data[0] +
-            data[1]*256 +
-            data[2]*65536 +
-            data[3]*16777216)
-
-def getUint16(data):
-    """!
-       This function coverts 2 bytes to a 16-bit unsigned integer.
-
-        @param data : 1-demension byte array
-        @return     : 16-bit unsigned integer
-    """ 
-    return (data[0] +
-            data[1]*256)
-
-def getHex(data):
-    """!
-       This function coverts 4 bytes to a 32-bit unsigned integer in hex.
-
-        @param data : 1-demension byte array
-        @return     : 32-bit unsigned integer in hex
-    """         
-    #return (binascii.hexlify(data[::-1]))
-    word = [1, 2**8, 2**16, 2**24]
-    return np.matmul(data,word)
 
 def checkMagicPattern(data):
     """!
