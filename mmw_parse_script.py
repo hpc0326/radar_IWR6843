@@ -53,7 +53,7 @@ import json
 from parser_mmw_demo import parser_one_mmw_demo_output_packet
 from parser_mmw_demo import parser_helper
 
-
+import csv
 
 # Set up COM Port and configuration file 
 # f = open('configuration_mac.json')
@@ -81,6 +81,9 @@ frameData = {}
 currentIndex = 0
 # word array to convert 4 bytes to a 32 bit number
 word = [1, 2**8, 2**16, 2**24]
+
+
+
 
 # Function to configure the serial ports and send the data from
 # the configuration file to the radar
@@ -245,7 +248,7 @@ def readAndParseData6843(Dataport, configParameters):
 
         # Check the parser result
         # print('detectedNoise_array', detectedNoise_array)
-        print(allBinData[totalBytesParsed::1])
+        #print(allBinData[totalBytesParsed::1])
         # print(len(parser_one_mmw_demo_output_packet(allBinData[totalBytesParsed::1], readNumBytes-totalBytesParsed,DEBUG)))
         # print(detectedNoise_array)
 
@@ -264,22 +267,24 @@ def readAndParseData6843(Dataport, configParameters):
 
             
             # For example, dump all S/W objects to a csv file
-            """
-            import csv
-            if (numFramesParsed == 1):
+            
+            
+            """if (numFramesParsed == 1):
+                print('here')
                 democsvfile = open('mmw_demo_output.csv', 'w', newline='')                
                 demoOutputWriter = csv.writer(democsvfile, delimiter=',',
                                         quotechar='', quoting=csv.QUOTE_NONE)                                    
-                demoOutputWriter.writerow(["frame","DetObj#","x","y","z","v","snr","noise"])            
-            
+                demoOutputWriter.writerow(["frame","DetObj#","x","y","z","v","snr","noise"])       """
+            demoOutputWriter.writerow("new frame")
             for obj in range(numDetObj):
+                print('write')
                 demoOutputWriter.writerow([numFramesParsed-1, obj, detectedX_array[obj],\
                                             detectedY_array[obj],\
                                             detectedZ_array[obj],\
                                             detectedV_array[obj],\
                                             detectedSNR_array[obj],\
                                             detectedNoise_array[obj]])
-            """
+            
             detObj = {"numObj": numDetObj, "range": detectedRange_array, \
                         "x": detectedX_array, "y": detectedY_array, "z": detectedZ_array}
             dataOK = 1 
@@ -343,4 +348,8 @@ def main():
 
 
 if __name__ == "__main__":
+    democsvfile = open('mmw_demo_output.csv', 'w', newline='')                
+    demoOutputWriter = csv.writer(democsvfile, delimiter=',',
+                            quotechar='', quoting=csv.QUOTE_NONE)                                    
+    demoOutputWriter.writerow(["frame","DetObj#","x","y","z","v","snr","noise"])
     main()

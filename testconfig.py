@@ -1,4 +1,4 @@
-configFileName = 'xwr68xx_AOP_profile_2023_03_01T07_56_04_503.cfg'
+configFileName = 'iwr6843config.cfg'
 
 def parseConfigFile(configFileName):
     configParameters = {} # Initialize an empty dictionary to store the configuration parameters
