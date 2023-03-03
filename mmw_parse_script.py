@@ -51,9 +51,13 @@ import sys
 import json
 # import the parser function 
 from parser_mmw_demo import parser_one_mmw_demo_output_packet
+from parser_mmw_demo import parser_helper
+
+
 
 # Set up COM Port and configuration file 
-f = open('configuration_mac.json')
+# f = open('configuration_mac.json')
+f = open('configuration.json')
 data = json.load(f)
     
 # Change the configuration file name
@@ -62,7 +66,7 @@ cliPort = data['cliPort']
 dataPort = data['dataPort']
 
 # Change the debug variable to use print()
-DEBUG = True
+DEBUG = False
 
 # Constants
 maxBufferSize = 2**15
@@ -75,7 +79,7 @@ magicWord = [2, 1, 4, 3, 6, 5, 8, 7]
 detObj = {}  
 frameData = {}    
 currentIndex = 0
-# word array to convert 4 bytes to a 32 bit number 
+# word array to convert 4 bytes to a 32 bit number
 word = [1, 2**8, 2**16, 2**24]
 
 # Function to configure the serial ports and send the data from
@@ -238,8 +242,13 @@ def readAndParseData6843(Dataport, configParameters):
         detectedElevation_array,  \
         detectedSNR_array,  \
         detectedNoise_array = parser_one_mmw_demo_output_packet(allBinData[totalBytesParsed::1], readNumBytes-totalBytesParsed,DEBUG)
-        #print([len(detectedX_array),len(detectedY_array),len(detectedZ_array)])
+
         # Check the parser result
+        # print('detectedNoise_array', detectedNoise_array)
+        print(allBinData[totalBytesParsed::1])
+        # print(len(parser_one_mmw_demo_output_packet(allBinData[totalBytesParsed::1], readNumBytes-totalBytesParsed,DEBUG)))
+        # print(detectedNoise_array)
+
         if(DEBUG):
             print ("Parser result: ", parser_result)
         if (parser_result == 0): 
@@ -309,6 +318,7 @@ def update():
     if dataOk and len(detObj["x"]) > 0:
         x = detObj["x"]
         y = detObj["y"]
+
         
     return dataOk, x, y
 
@@ -334,4 +344,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
