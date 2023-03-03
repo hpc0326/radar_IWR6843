@@ -4,9 +4,11 @@ import numpy as np
 from parser_mmw_demo import parser_one_mmw_demo_output_packet
 
 maxBufferSize = 2**15
+byteBuffer = np.zeros(2**15,dtype = 'uint8')
 magicWord = [2, 1, 4, 3, 6, 5, 8, 7]
 word = [1, 2**8, 2**16, 2**24]
 DEBUG = True
+print(byteBuffer)
 
 def readAndParseData6843(Dataport, configParameters):
     #load from serial
