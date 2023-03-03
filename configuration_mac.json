@@ -1,6 +1,6 @@
 {
     "configFileName" : "xwr68xx_AOP_profile_2023_03_01T07_56_04_503.cfg",
-    "cliPort" : "/dev/tty.SLAB_USBtoUART",
-    "dataPort" : "/dev/tty.SLAB_USBtoUART3",
+    "cliPort" : "/dev/tty.SLAB_USBtoUART3",
+    "dataPort" : "/dev/tty.SLAB_USBtoUART",
     "debugMode" : "True"
 }
