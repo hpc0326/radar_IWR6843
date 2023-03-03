@@ -42,6 +42,7 @@
 #   2. This example script also outputs the detected point cloud data in mmw_demo_output.csv 
 #      to showcase how to use the output of parser_one_mmw_demo_output_packet
 # ****************************************************************************
+
 import serial
 import time
 import numpy as np
@@ -51,7 +52,7 @@ import json
 # import the parser function 
 from parser_mmw_demo import parser_one_mmw_demo_output_packet
 
-
+# Set up COM Port and configuration file 
 f = open('configuration_mac.json')
 data = json.load(f)
     
@@ -84,18 +85,9 @@ def serialConfig(configFileName):
     global CLIport
     global Dataport
     # Open the serial ports for the configuration and the data ports
-    
-    # Raspberry pi
-    #CLIport = serial.Serial('/dev/ttyACM0', 115200)
-    #Dataport = serial.Serial('/dev/ttyACM1', 921600)
 
-    # Windows
     CLIport = serial.Serial(cliPort, 115200)
     Dataport = serial.Serial(dataPort, 921600)
-    
-    # Mac
-    #CLIport = serial.Serial('/dev/tty.SLAB_USBtoUART', 115200)
-    #Dataport = serial.Serial('/dev/tty.SLAB_USBtoUART10', 921600)
 
     # Read the configuration file and send it to the board
     config = [line.rstrip('\r\n') for line in open(configFileName)]
@@ -160,7 +152,7 @@ def parseConfigFile(configFileName):
 ##################################################################################
 # USE parser_mmw_demo SCRIPT TO PARSE ABOVE INPUT FILES
 ##################################################################################
-def readAndParseData14xx(Dataport, configParameters):
+def readAndParseData6843(Dataport, configParameters):
     #load from serial
     global byteBuffer, byteBufferLength
 
@@ -313,7 +305,7 @@ def update():
     y = []
     
     # Read and parse the received data
-    dataOk, frameNumber, detObj = readAndParseData14xx(Dataport, configParameters)
+    dataOk, frameNumber, detObj = readAndParseData6843(Dataport, configParameters)
     if dataOk and len(detObj["x"]) > 0:
         x = detObj["x"]
         y = detObj["y"]
