@@ -74,7 +74,7 @@ magicWord = [2, 1, 4, 3, 6, 5, 8, 7]
 detObj = {}  
 frameData = {}    
 currentIndex = 0
-# word array to convert 4 bytes to a 32 bit number
+# word array to convert 4 bytes to a 32 bit number 
 word = [1, 2**8, 2**16, 2**24]
 
 # Function to configure the serial ports and send the data from
@@ -84,14 +84,13 @@ def serialConfig(configFileName):
     global CLIport
     global Dataport
     # Open the serial ports for the configuration and the data ports
+
+    CLIport = serial.Serial(cliPort, 115200)
+    Dataport = serial.Serial(dataPort, 921600)
     
     # Raspberry pi
     #CLIport = serial.Serial('/dev/ttyACM0', 115200)
     #Dataport = serial.Serial('/dev/ttyACM1', 921600)
-
-    # Windows
-    CLIport = serial.Serial(cliPort, 115200)
-    Dataport = serial.Serial(dataPort, 921600)
     
     # Mac
     #CLIport = serial.Serial('/dev/tty.SLAB_USBtoUART', 115200)
