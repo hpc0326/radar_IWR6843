@@ -66,7 +66,7 @@ cliPort = data['cliPort']
 dataPort = data['dataPort']
 
 # Change the debug variable to use print()
-DEBUG = False
+DEBUG = data['debugMode']
 
 # Constants
 maxBufferSize = 2**15
@@ -81,6 +81,9 @@ frameData = {}
 currentIndex = 0
 # word array to convert 4 bytes to a 32 bit number
 word = [1, 2**8, 2**16, 2**24]
+
+# frame 個數統計
+frameNum = 0
 
 
 
@@ -162,6 +165,7 @@ def parseConfigFile(configFileName):
 def readAndParseData6843(Dataport, configParameters):
     #load from serial
     global byteBuffer, byteBufferLength
+    global frameNum
 
     # Initialize variables
     magicOK = 0 # Checks if magic number has been read
@@ -257,6 +261,8 @@ def readAndParseData6843(Dataport, configParameters):
         if (parser_result == 0): 
             totalBytesParsed += (headerStartIndex+totalPacketNumBytes)    
             numFramesParsed+=1
+            frameNum+=1
+            # print('frameNum',frameNum)
             if(DEBUG):
                 print("totalBytesParsed: ", totalBytesParsed)
             ##################################################################################
@@ -268,17 +274,9 @@ def readAndParseData6843(Dataport, configParameters):
             
             # For example, dump all S/W objects to a csv file
             
-            
-            """if (numFramesParsed == 1):
-                print('here')
-                democsvfile = open('mmw_demo_output.csv', 'w', newline='')                
-                demoOutputWriter = csv.writer(democsvfile, delimiter=',',
-                                        quotechar='', quoting=csv.QUOTE_NONE)                                    
-                demoOutputWriter.writerow(["frame","DetObj#","x","y","z","v","snr","noise"])       """
             demoOutputWriter.writerow("new frame")
             for obj in range(numDetObj):
-                print('write')
-                demoOutputWriter.writerow([numFramesParsed-1, obj, detectedX_array[obj],\
+                demoOutputWriter.writerow([frameNum, obj, detectedX_array[obj],\
                                             detectedY_array[obj],\
                                             detectedZ_array[obj],\
                                             detectedV_array[obj],\
