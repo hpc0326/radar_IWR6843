@@ -42,14 +42,25 @@
 #   2. This example script also outputs the detected point cloud data in mmw_demo_output.csv 
 #      to showcase how to use the output of parser_one_mmw_demo_output_packet
 # ****************************************************************************
+import sys
 import serial
 import time
 import numpy as np
+from threading import Thread
 import os
 import sys
 import json
+import keyboard
+import csv
+
 # import the parser function 
 from parser_mmw_demo import parser_one_mmw_demo_output_packet
+
+#for GUI module
+from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
+import pyqtgraph.opengl as gl
+import pyqtgraph as pg
+import numpy as np
 
 
 f = open('configuration.json')
@@ -61,7 +72,8 @@ cliPort = data['cliPort']
 dataPort = data['dataPort']
 
 # Change the debug variable to use print()
-DEBUG = True
+DEBUG = False
+DETECTION = 0
 
 # Constants
 maxBufferSize = 2**15
@@ -74,8 +86,132 @@ magicWord = [2, 1, 4, 3, 6, 5, 8, 7]
 detObj = {}  
 frameData = {}    
 currentIndex = 0
+pos1 = np.empty((50,3))
 # word array to convert 4 bytes to a 32 bit number
 word = [1, 2**8, 2**16, 2**24]
+
+
+class CustomTextItem(gl.GLGraphicsItem.GLGraphicsItem):
+	def __init__(self, X, Y, Z, text):
+		gl.GLGraphicsItem.GLGraphicsItem.__init__(self)
+		self.text = text
+		self.X = X
+		self.Y = Y
+		self.Z = Z
+
+	def setGLViewWidget(self, GLViewWidget):
+		self.GLViewWidget = GLViewWidget
+
+	def setText(self, text):
+		self.text = text
+		self.update()
+
+	def setX(self, X):
+		self.X = X
+		self.update()
+
+	def setY(self, Y):
+		self.Y = Y
+		self.update()
+
+	def setZ(self, Z):
+		self.Z = Z
+		self.update()
+
+	def paint(self):
+		a = 0
+		'''
+		# For some version gl is ok some get following error
+		#Error while drawing item <__main__.CustomTextItem object at 0x7fe379b51a60>
+		
+		self.GLViewWidget.qglColor(QtCore.Qt.cyan)
+		self.GLViewWidget.renderText(round(self.X), round(self.Y), round(self.Z), self.text)
+		'''
+  
+class Custom3DAxis(gl.GLAxisItem):
+	#Class defined to extend 'gl.GLAxisItem'
+	def __init__(self, parent, color=(0.0,0.0,0.0,.6)):
+		gl.GLAxisItem.__init__(self)
+		self.parent = parent
+		self.c = color
+		
+	def add_tick_values(self, xticks=[], yticks=[], zticks=[]):
+		#Adds ticks values. 
+		x,y,z = self.size()
+		xtpos = np.linspace(0, x, len(xticks))
+		ytpos = np.linspace(0, y, len(yticks))
+		ztpos = np.linspace(0, z, len(zticks))
+		#X label
+		for i, xt in enumerate(xticks):
+			val = CustomTextItem((xtpos[i]), Y= 0, Z= 0, text='{}'.format(xt))
+			val.setGLViewWidget(self.parent)
+			self.parent.addItem(val)
+		#Y label
+		for i, yt in enumerate(yticks):
+			val = CustomTextItem(X=0, Y=round(ytpos[i]), Z= 0, text='{}'.format(yt))
+			val.setGLViewWidget(self.parent)
+			self.parent.addItem(val)
+		#Z label
+		for i, zt in enumerate(zticks):
+			val = CustomTextItem(X=0, Y=0, Z=round(ztpos[i]), text='{}'.format(zt))
+			val.setGLViewWidget(self.parent)
+			self.parent.addItem(val)
+
+app = QtWidgets.QApplication([])
+w = gl.GLViewWidget()
+w.show()
+
+JB_RADAR_INSTALL_HEIGHT = 2.46
+####### create box to represent device ######
+verX = 0.0625
+verY = 0.05
+verZ = 0.125
+zOffSet =  JB_RADAR_INSTALL_HEIGHT
+verts = np.empty((2,3,3))
+verts[0,0,:] = [-verX, 0,  verZ + zOffSet]
+verts[0,1,:] = [-verX, 0, -verZ + zOffSet]
+verts[0,2,:] = [verX,  0, -verZ + zOffSet]
+verts[1,0,:] = [-verX, 0,  verZ + zOffSet]
+verts[1,1,:] = [verX,  0,  verZ + zOffSet]
+verts[1,2,:] = [verX,  0, -verZ + zOffSet]
+
+#sensor position red mesh
+evmBox = gl.GLMeshItem(vertexes=verts,smooth=False,drawEdges=True,edgeColor=pg.glColor('r'),drawFaces=False)
+w.addItem(evmBox)
+#############################################
+
+#base grid
+g = gl.GLGridItem()
+g.setSize(x=50,y=50,z=50)
+w.addItem(g)
+
+#x, y, z axis
+axis = Custom3DAxis(w, color=(0.2,0.2,0.2,1.0))
+axis.setSize(x=5, y=5, z=5)
+xt = [0,1,2,3,4,5]  
+axis.add_tick_values(xticks=xt, yticks=xt, zticks=xt)
+w.addItem(axis)
+
+#red dot
+pos = np.zeros((100,3))
+color = [1.0, 0.0, 0.0, 1.0]
+sp1 = gl.GLScatterPlotItem(pos=pos,color=color,size = 4.0)
+w.addItem(sp1)
+
+def update_point():
+    ## update volume colors
+    global color,pos1
+    color = np.empty((len(pos1),4), dtype=np.float32)
+    color[:,3] = 1.0
+    color[:,0] =  np.clip(pos1[:,0] * 3.0, 0, 1)
+    color[:,1] =  np.clip(pos1[:,1] * 1.0, 0,1)
+    color[:,2] =  np.clip(pos1[:,2] ** 3, 0, 1)
+    #print(len(pos1))
+    sp1.setData(pos=pos1,color=color)
+    
+t = QtCore.QTimer()
+t.timeout.connect(update_point)
+t.start(50)
 
 # Function to configure the serial ports and send the data from
 # the configuration file to the radar
@@ -128,21 +264,21 @@ def parseConfigFile(configFileName):
             rampEndTime = float(splitWords[5])
             freqSlopeConst = float(splitWords[8])
             numAdcSamples = int(splitWords[10])
-            numAdcSamplesRoundTo2 = 1;
+            numAdcSamplesRoundTo2 = 1
             
             while numAdcSamples > numAdcSamplesRoundTo2:
-                numAdcSamplesRoundTo2 = numAdcSamplesRoundTo2 * 2;
+                numAdcSamplesRoundTo2 = numAdcSamplesRoundTo2 * 2
                 
-            digOutSampleRate = int(splitWords[11]);
+            digOutSampleRate = int(splitWords[11])
             
         # Get the information about the frame configuration    
         elif "frameCfg" in splitWords[0]:
             
-            chirpStartIdx = int(splitWords[1]);
-            chirpEndIdx = int(splitWords[2]);
-            numLoops = float(splitWords[3]);
-            numFrames = int(splitWords[4]);
-            framePeriodicity = int(splitWords[5]);
+            chirpStartIdx = int(splitWords[1])
+            chirpEndIdx = int(splitWords[2])
+            numLoops = float(splitWords[3])
+            numFrames = int(splitWords[4])
+            framePeriodicity = float(splitWords[5])
 
             
     # Combine the read data to obtain the configuration parameters           
@@ -162,7 +298,7 @@ def parseConfigFile(configFileName):
 ##################################################################################
 def readAndParseData14xx(Dataport, configParameters):
     #load from serial
-    global byteBuffer, byteBufferLength
+    global byteBuffer, byteBufferLength, pos1
 
     # Initialize variables
     magicOK = 0 # Checks if magic number has been read
@@ -222,8 +358,8 @@ def readAndParseData14xx(Dataport, configParameters):
             print("allBinData: ", allBinData[0], allBinData[1], allBinData[2], allBinData[3])
 
         # init local variables
-        totalBytesParsed = 0;
-        numFramesParsed = 0;
+        totalBytesParsed = 0
+        numFramesParsed = 0
 
         # parser_one_mmw_demo_output_packet extracts only one complete frame at a time
         # so call this in a loop till end of file
@@ -261,28 +397,25 @@ def readAndParseData14xx(Dataport, configParameters):
             # help(parser_one_mmw_demo_output_packet)
             ##################################################################################
 
-            
-            # For example, dump all S/W objects to a csv file
-            """
-            import csv
-            if (numFramesParsed == 1):
-                democsvfile = open('mmw_demo_output.csv', 'w', newline='')                
-                demoOutputWriter = csv.writer(democsvfile, delimiter=',',
-                                        quotechar='', quoting=csv.QUOTE_NONE)                                    
-                demoOutputWriter.writerow(["frame","DetObj#","x","y","z","v","snr","noise"])            
-            
-            for obj in range(numDetObj):
-                demoOutputWriter.writerow([numFramesParsed-1, obj, detectedX_array[obj],\
-                                            detectedY_array[obj],\
-                                            detectedZ_array[obj],\
-                                            detectedV_array[obj],\
-                                            detectedSNR_array[obj],\
-                                            detectedNoise_array[obj]])
-            """
             detObj = {"numObj": numDetObj, "range": detectedRange_array, \
-                        "x": detectedX_array, "y": detectedY_array, "z": detectedZ_array}
+                        "x": detectedX_array, "y": detectedY_array, "z": detectedZ_array
+                    }
+            
+            detSideInfoObj = { "doppler" : detectedV_array, "snr" : detectedSNR_array,
+                              "noise" : detectedNoise_array
+                            }
             dataOK = 1 
-            #print(detObj)
+            print(detObj)
+            # keyboard_detect(detObj, detSideInfoObj)
+            pos1X = np.empty((numDetObj,3))
+            
+            for i in range(numDetObj):
+                zt = detectedZ_array[i] * 5 + 5
+                xt = detectedX_array[i] * 5
+                yt = detectedX_array[i] * 5
+                pos1X[i] = (xt,yt,zt)
+				
+            pos1 = pos1X
             
         else: 
             # error in parsing; exit the loop
@@ -320,6 +453,47 @@ def update():
         
     return dataOk, x, y
 
+def keyboard_detect(detObj, detSideInfoObj):
+    
+    global DETECTION
+    
+    if 1:
+        for index, obj in enumerate(range(detObj['numObj'])):
+            """demoOutputWriter.writerow([index, obj, detObj['x'][obj],
+                detObj['y'][obj], detObj['z'][obj], detSideInfoObj['doppler'][obj], 
+                detSideInfoObj['snr'][obj], detSideInfoObj['noise'][obj]])"""
+            
+            demoOutputWriter.writerow([detSideInfoObj['doppler'][obj]])
+        demoOutputWriter.writerow(["new frame"])   
+        
+        """if keyboard.read_key() == 'e':
+            DETECTION = 0
+            demoOutputWriter.writerow(["stop read"])  
+            print("end read")"""
+            
+    else :     
+        if keyboard.read_key() == 's':
+            DETECTION = 1
+            demoOutputWriter.writerow(["start read"])  
+            print("start read")
+            
+            
+def get3dBox(targetCloud): 
+	xMax = np.max(targetCloud[:,0])
+	xr   = np.min(targetCloud[:,0])
+	xl = np.abs(xMax-xr)
+
+	yMax = np.max(targetCloud[:,1])
+	yr = np.min(targetCloud[:,1])
+	yl = np.abs(yMax-yr)
+	
+	zMax = np.max(targetCloud[:,2])
+	zr = np.min(targetCloud[:,2])
+	zl = np.abs(zMax-zr)
+	
+	nop = len(targetCloud)
+	return (xr,xl,yr,yl,zr,zl,nop)	
+        
 
 def main():        
 
@@ -329,8 +503,9 @@ def main():
     # Get the configuration parameters from the configuration file
     global configParameters 
     configParameters = parseConfigFile(configFileName)
+    
 
-    while 1 : 
+    while 1 :  
         update()
     
     
@@ -338,8 +513,22 @@ def main():
     CLIport.close()
     Dataport.close()
 
+def uartThread(name):
+	# port.flushInput()
+	while True:
+		main()
+
+thread1 = Thread(target = uartThread, args =("UART",))
+thread1.setDaemon(True)
+thread1.start()
 
 
 if __name__ == "__main__":
-    main()
+    democsvfile = open('mmw_demo_output.csv', 'w', newline='')                
+    demoOutputWriter = csv.writer(democsvfile, delimiter=',',
+                            quotechar='', quoting=csv.QUOTE_NONE)                                    
+    demoOutputWriter.writerow(["frame","DetObj#","x","y","z","v","snr","noise"])   
+    if (sys.flags.interactive != 1) or not hasattr(QtCore,'PYQT_VERSION'):
+        QtWidgets.QApplication.instance().exec()   
+    # main()
 
